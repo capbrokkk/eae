@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Comunidade de Memes</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1f1c2c, #928dab);
+      color: #fff;
+      padding: 0;
+    }
+    header {
+      background: #222;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: #333;
+      padding: 10px;
+    }
+    nav button {
+      background: none;
+      border: none;
+      color: #fff;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    nav button.active {
+      background: #555;
+      border-radius: 4px;
+    }
+    main {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    section {
+      display: none;
+    }
+    section.active {
+      display: block;
+    }
+    form {
+      max-width: 400px;
+      margin: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #292b40;
+      padding: 20px;
+      border-radius: 10px;
+    }
+    input, textarea {
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+    }
+    input[type="submit"], button.submit-btn {
+      background: #4caf50;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .message {
+      text-align: center;
+      margin: 10px 0;
+      font-weight: bold;
+    }
+    #playMusic {
+      margin: 15px auto;
+      display: block;
+      padding: 10px 20px;
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .profile-pic {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      object-fit: cover;
+      cursor: pointer;
+      border: 2px solid #fff;
+    }
+    .meme {
+      background: #3a3b5a;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      position: relative;
+    }
+    .meme video, .meme img {
+      max-width: 100%;
+      border-radius: 10px;
+    }
+    .admin-panel {
+      display: none;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #000000aa;
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .admin-panel button {
+      display: block;
+      background: #ff3333;
+      color: white;
+      border: none;
+      padding: 6px 8px;
+      border-radius: 4px;
+      margin-bottom: 5px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    @media (max-width: 600px) {
+      nav {
+        flex-direction: column;
+        align-items: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Comunidade de Memes</h1>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-tab="home">Início</button>
+  <button class="tab-btn" data-tab="login">Login</button>
+  <button class="tab-btn" data-tab="signup">Criar Conta</button>
+  <button class="tab-btn" data-tab="add">Adicionar Meme</button>
+  <button class="tab-btn" data-tab="memes">Ver Memes</button>
+</nav>
+
+<main>
+  <button id="playMusic">Ativar música de fundo</button>
+  <audio id="bgMusic" loop>
+    <source src="renom.mp3" type="audio/mp3" />
+  </audio>
+
+  <section id="home" class="active">
+    <h2>Bem-vindo!</h2>
+    <p>Entre, crie conta e compartilhe memes!</p>
+  </section>
+
+  <section id="login">
+    <form id="loginForm">
+      <input type="text" id="loginUser" placeholder="Usuário" required />
+      <input type="password" id="loginPass" placeholder="Senha" required />
+      <input type="text" id="loginSecret" placeholder="Código Secreto (admin)" />
+      <input type="submit" value="Entrar" />
+      <div class="message" id="loginMessage"></div>
+    </form>
+  </section>
+
+  <section id="signup">
+    <form id="signupForm">
+      <input type="text" id="signupUser" placeholder="Usuário" required />
+      <input type="password" id="signupPass" placeholder="Senha" required />
+      <input type="file" id="signupPic" accept="image/*" required />
+      <input type="submit" value="Criar Conta" />
+      <div class="message" id="signupMessage"></div>
+    </form>
+  </section>
+
+  <section id="add">
+    <form id="memeForm">
+      <input type="file" id="memeFile" accept="image/*,video/*" required />
+      <textarea id="memeText" placeholder="Texto do meme (opcional)"></textarea>
+      <input type="submit" value="Postar Meme" />
+      <div class="message" id="memeMessage"></div>
+    </form>
+  </section>
+
+  <section id="memes">
+    <div id="memeList"></div>
+  </section>
+</main>
+<script>
+let currentUser = null;
+let users = JSON.parse(localStorage.getItem("users")) || {};
+let memes = JSON.parse(localStorage.getItem("memes")) || [];
+
+function saveData() {
+  localStorage.setItem("users", JSON.stringify(users));
+  localStorage.setItem("memes", JSON.stringify(memes));
+}
+
+document.querySelectorAll(".tab-btn").forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+    document.getElementById(btn.dataset.tab).classList.add("active");
+  };
+});
+
+document.getElementById("playMusic").onclick = () => {
+  const music = document.getElementById("bgMusic");
+  music.volume = 0.1;
+  music.play();
+};
+
+document.getElementById("signupForm").onsubmit = e => {
+  e.preventDefault();
+  const user = document.getElementById("signupUser").value.trim();
+  const pass = document.getElementById("signupPass").value;
+  const pic = document.getElementById("signupPic").files[0];
+  const msg = document.getElementById("signupMessage");
+
+  if (!user || !pass || !pic) {
+    msg.textContent = "Preencha todos os campos.";
+    return;
+  }
+
+  if (users[user]) {
+    msg.textContent = "Usuário já existe.";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    users[user] = {
+      pass,
+      pic: reader.result,
+      friends: [],
+      followers: [],
+      isAdmin: user === "capkzy",
+      banned: false
+    };
+    saveData();
+    msg.textContent = "Conta criada!";
+  };
+  reader.readAsDataURL(pic);
+};
+
+document.getElementById("loginForm").onsubmit = e => {
+  e.preventDefault();
+  const user = document.getElementById("loginUser").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  const secret = document.getElementById("loginSecret").value;
+  const msg = document.getElementById("loginMessage");
+
+  if (!users[user]) {
+    msg.textContent = "Usuário não encontrado.";
+    return;
+  }
+
+  if (users[user].banned) {
+    msg.textContent = "Você foi banido.";
+    return;
+  }
+
+  if (users[user].pass !== pass) {
+    msg.textContent = "Senha incorreta.";
+    return;
+  }
+
+  if (secret && secret === "3x!AdmC0d3#2025") {
+    users[user].isAdmin = true;
+  }
+
+  currentUser = user;
+  msg.textContent = "Logado como " + user;
+};
+
+document.getElementById("memeForm").onsubmit = e => {
+  e.preventDefault();
+  const file = document.getElementById("memeFile").files[0];
+  const text = document.getElementById("memeText").value;
+  const msg = document.getElementById("memeMessage");
+
+  if (!currentUser) {
+    msg.textContent = "Você precisa estar logado.";
+    return;
+  }
+
+  if (!file) {
+    msg.textContent = "Selecione um meme.";
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    memes.push({
+      user: currentUser,
+      file: reader.result,
+      type: file.type.startsWith("video") ? "video" : "img",
+      text
+    });
+    saveData();
+    msg.textContent = "Meme postado!";
+    loadMemes();
+  };
+  reader.readAsDataURL(file);
+};
+
+function loadMemes() {
+  const container = document.getElementById("memeList");
+  container.innerHTML = "";
+  memes.forEach((meme, i) => {
+    if (users[meme.user]?.banned) return;
+
+    const div = document.createElement("div");
+    div.className = "meme";
+
+    const profile = document.createElement("img");
+    profile.className = "profile-pic";
+    profile.src = users[meme.user]?.pic || "";
+    profile.onclick = () => showAdminPanel(i, meme.user, div);
+
+    const content = document.createElement(meme.type === "video" ? "video" : "img");
+    content.src = meme.file;
+    if (meme.type === "video") content.controls = true;
+
+    const caption = document.createElement("p");
+    caption.textContent = meme.text;
+
+    div.appendChild(profile);
+    div.appendChild(content);
+    if (meme.text) div.appendChild(caption);
+    container.appendChild(div);
+  });
+}
+
+function showAdminPanel(index, user, container) {
+  if (!currentUser || !users[currentUser].isAdmin) return;
+
+  const panel = document.createElement("div");
+  panel.className = "admin-panel";
+
+  const banBtn = document.createElement("button");
+  banBtn.textContent = "Banir usuário";
+  banBtn.onclick = () => {
+    users[user].banned = true;
+    saveData();
+    loadMemes();
+  };
+
+  const rmvBtn = document.createElement("button");
+  rmvBtn.textContent = "Remover meme";
+  rmvBtn.onclick = () => {
+    memes.splice(index, 1);
+    saveData();
+    loadMemes();
+  };
+
+  const addBtn = document.createElement("button");
+  addBtn.textContent = "Adicionar amigo";
+  addBtn.onclick = () => {
+    if (!users[currentUser].friends.includes(user)) {
+      users[currentUser].friends.push(user);
+      saveData();
+    }
+  };
+
+  const followBtn = document.createElement("button");
+  followBtn.textContent = "Seguir";
+  followBtn.onclick = () => {
+    if (!users[user].followers.includes(currentUser)) {
+      users[user].followers.push(currentUser);
+      saveData();
+    }
+  };
+
+  panel.appendChild(banBtn);
+  panel.appendChild(rmvBtn);
+  panel.appendChild(addBtn);
+  panel.appendChild(followBtn);
+
+  container.querySelector(".admin-panel")?.remove();
+  container.appendChild(panel);
+}
+
+window.onload = () => {
+  loadMemes();
+};
+</script>
+
